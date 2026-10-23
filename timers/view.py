@@ -26,7 +26,7 @@ def describe(occurrence: Occurrence, now: datetime) -> str:
     return text
 
 
-def build_board(schedule: Schedule, now: datetime) -> discord.ui.LayoutView:
+def build_board(schedule: Schedule, now: datetime, server: str | None = None) -> discord.ui.LayoutView:
     occurrences = schedule.occurrences(now)
     groups = (
         ("🎪 Events", [o for o in occurrences if o.kind not in {"boss", "reset"}]),
@@ -36,7 +36,8 @@ def build_board(schedule: Schedule, now: datetime) -> discord.ui.LayoutView:
     container = discord.ui.Container(
         discord.ui.TextDisplay(
             "**🕒 AION 2 – Timer-Board**\n"
-            f"-# {schedule.region_id} · {schedule.zone.key} · UTC{now.astimezone(schedule.zone):%z}"
+            f"-# {schedule.region_id}" + (f" · {server}" if server else "")
+            + f" · {schedule.zone.key} · UTC{now.astimezone(schedule.zone):%z}"
             " · Zeiten in deiner Discord-Zeitzone"
         ),
         accent_colour=0x2B6CB0,

@@ -1,0 +1,603 @@
+{
+  "checked_at": "2026-10-23",
+  "regions": {
+    "eu": {
+      "source": "https://aion2.plaync.com/en-us/api/gameinfo/servers?region=eu&lang=en-US",
+      "servers": [
+        {
+          "id": 1301,
+          "name": "Siel"
+        },
+        {
+          "id": 1302,
+          "name": "Nezekan"
+        },
+        {
+          "id": 1303,
+          "name": "Vaizel"
+        },
+        {
+          "id": 1304,
+          "name": "Kaisinel"
+        },
+        {
+          "id": 1305,
+          "name": "Yustiel"
+        },
+        {
+          "id": 1306,
+          "name": "Ariel"
+        },
+        {
+          "id": 1307,
+          "name": "Fregion"
+        },
+        {
+          "id": 1308,
+          "name": "Meslamtaeda"
+        },
+        {
+          "id": 1309,
+          "name": "Hithanya"
+        },
+        {
+          "id": 1310,
+          "name": "Nania"
+        },
+        {
+          "id": 1311,
+          "name": "Tahavatha"
+        },
+        {
+          "id": 1312,
+          "name": "Luteros"
+        },
+        {
+          "id": 1313,
+          "name": "Phernos"
+        },
+        {
+          "id": 1314,
+          "name": "Daminu"
+        },
+        {
+          "id": 1315,
+          "name": "Kasaka"
+        },
+        {
+          "id": 1316,
+          "name": "Bakarma"
+        },
+        {
+          "id": 1317,
+          "name": "Tsenka"
+        },
+        {
+          "id": 1318,
+          "name": "Kochi"
+        },
+        {
+          "id": 1319,
+          "name": "Ishtar"
+        },
+        {
+          "id": 1320,
+          "name": "Tiamat"
+        },
+        {
+          "id": 1321,
+          "name": "Gauss"
+        },
+        {
+          "id": 1322,
+          "name": "Lamuatan"
+        },
+        {
+          "id": 1323,
+          "name": "Nathara"
+        },
+        {
+          "id": 2301,
+          "name": "Israphel"
+        },
+        {
+          "id": 2302,
+          "name": "Zikel"
+        },
+        {
+          "id": 2303,
+          "name": "Triniel"
+        },
+        {
+          "id": 2304,
+          "name": "Lumiel"
+        },
+        {
+          "id": 2305,
+          "name": "Marchutan"
+        },
+        {
+          "id": 2306,
+          "name": "Azphel"
+        },
+        {
+          "id": 2307,
+          "name": "Ereshkigal"
+        },
+        {
+          "id": 2308,
+          "name": "Beritra"
+        },
+        {
+          "id": 2309,
+          "name": "Nemon"
+        },
+        {
+          "id": 2310,
+          "name": "Hadala"
+        },
+        {
+          "id": 2311,
+          "name": "Ludra"
+        },
+        {
+          "id": 2312,
+          "name": "Ulgorn"
+        },
+        {
+          "id": 2313,
+          "name": "Munin"
+        },
+        {
+          "id": 2314,
+          "name": "Odar"
+        },
+        {
+          "id": 2315,
+          "name": "Zemurru"
+        },
+        {
+          "id": 2316,
+          "name": "Kromede"
+        },
+        {
+          "id": 2317,
+          "name": "Quai"
+        },
+        {
+          "id": 2318,
+          "name": "Baba"
+        },
+        {
+          "id": 2319,
+          "name": "Fafnir"
+        },
+        {
+          "id": 2320,
+          "name": "Indnath"
+        },
+        {
+          "id": 2321,
+          "name": "Agnita"
+        },
+        {
+          "id": 2322,
+          "name": "Atiel"
+        },
+        {
+          "id": 2323,
+          "name": "Tassin"
+        }
+      ]
+    },
+    "nae": {
+      "source": "https://aion2.plaync.com/en-us/api/gameinfo/servers?region=nae&lang=en-US",
+      "servers": [
+        {
+          "id": 1101,
+          "name": "Siel"
+        },
+        {
+          "id": 1102,
+          "name": "Nezekan"
+        },
+        {
+          "id": 1103,
+          "name": "Vaizel"
+        },
+        {
+          "id": 1104,
+          "name": "Kaisinel"
+        },
+        {
+          "id": 1105,
+          "name": "Yustiel"
+        },
+        {
+          "id": 1106,
+          "name": "Ariel"
+        },
+        {
+          "id": 1107,
+          "name": "Fregion"
+        },
+        {
+          "id": 1108,
+          "name": "Meslamtaeda"
+        },
+        {
+          "id": 1109,
+          "name": "Hithanya"
+        },
+        {
+          "id": 2101,
+          "name": "Israphel"
+        },
+        {
+          "id": 2102,
+          "name": "Zikel"
+        },
+        {
+          "id": 2103,
+          "name": "Triniel"
+        },
+        {
+          "id": 2104,
+          "name": "Lumiel"
+        },
+        {
+          "id": 2105,
+          "name": "Marchutan"
+        },
+        {
+          "id": 2106,
+          "name": "Azphel"
+        },
+        {
+          "id": 2107,
+          "name": "Ereshkigal"
+        },
+        {
+          "id": 2108,
+          "name": "Beritra"
+        },
+        {
+          "id": 2109,
+          "name": "Nemon"
+        }
+      ]
+    },
+    "naw": {
+      "source": "https://aion2.plaync.com/en-us/api/gameinfo/servers?region=naw&lang=en-US",
+      "servers": [
+        {
+          "id": 1201,
+          "name": "Siel"
+        },
+        {
+          "id": 1202,
+          "name": "Nezekan"
+        },
+        {
+          "id": 1203,
+          "name": "Vaizel"
+        },
+        {
+          "id": 1204,
+          "name": "Kaisinel"
+        },
+        {
+          "id": 1205,
+          "name": "Yustiel"
+        },
+        {
+          "id": 2201,
+          "name": "Israphel"
+        },
+        {
+          "id": 2202,
+          "name": "Zikel"
+        },
+        {
+          "id": 2203,
+          "name": "Triniel"
+        },
+        {
+          "id": 2204,
+          "name": "Lumiel"
+        },
+        {
+          "id": 2205,
+          "name": "Marchutan"
+        }
+      ]
+    },
+    "sa": {
+      "source": "https://aion2.plaync.com/en-us/api/gameinfo/servers?region=la&lang=en-US",
+      "servers": [
+        {
+          "id": 1401,
+          "name": "Siel"
+        },
+        {
+          "id": 1402,
+          "name": "Nezekan"
+        },
+        {
+          "id": 1403,
+          "name": "Vaizel"
+        },
+        {
+          "id": 1404,
+          "name": "Kaisinel"
+        },
+        {
+          "id": 1405,
+          "name": "Yustiel"
+        },
+        {
+          "id": 1406,
+          "name": "Ariel"
+        },
+        {
+          "id": 2401,
+          "name": "Israphel"
+        },
+        {
+          "id": 2402,
+          "name": "Zikel"
+        },
+        {
+          "id": 2403,
+          "name": "Triniel"
+        },
+        {
+          "id": 2404,
+          "name": "Lumiel"
+        },
+        {
+          "id": 2405,
+          "name": "Marchutan"
+        },
+        {
+          "id": 2406,
+          "name": "Azphel"
+        }
+      ]
+    },
+    "as": {
+      "source": "https://aion2.plaync.com/en-us/api/gameinfo/servers?region=as&lang=en-US",
+      "servers": [
+        {
+          "id": 1501,
+          "name": "Siel"
+        },
+        {
+          "id": 1502,
+          "name": "Nezekan"
+        },
+        {
+          "id": 1503,
+          "name": "Vaizel"
+        },
+        {
+          "id": 1504,
+          "name": "Kaisinel"
+        },
+        {
+          "id": 1505,
+          "name": "Yustiel"
+        },
+        {
+          "id": 1506,
+          "name": "Ariel"
+        },
+        {
+          "id": 1507,
+          "name": "Fregion"
+        },
+        {
+          "id": 1508,
+          "name": "Meslamtaeda"
+        },
+        {
+          "id": 1509,
+          "name": "Hithanya"
+        },
+        {
+          "id": 1510,
+          "name": "Nania"
+        },
+        {
+          "id": 2501,
+          "name": "Israphel"
+        },
+        {
+          "id": 2502,
+          "name": "Zikel"
+        },
+        {
+          "id": 2503,
+          "name": "Triniel"
+        },
+        {
+          "id": 2504,
+          "name": "Lumiel"
+        },
+        {
+          "id": 2505,
+          "name": "Marchutan"
+        },
+        {
+          "id": 2506,
+          "name": "Azphel"
+        },
+        {
+          "id": 2507,
+          "name": "Ereshkigal"
+        },
+        {
+          "id": 2508,
+          "name": "Beritra"
+        },
+        {
+          "id": 2509,
+          "name": "Nemon"
+        },
+        {
+          "id": 2510,
+          "name": "Hadala"
+        }
+      ]
+    },
+    "tw": {
+      "source": "https://tw.ncsoft.com/aion2/api/gameinfo/servers?lang=en",
+      "servers": [
+        {
+          "id": 1001,
+          "name": "希埃爾"
+        },
+        {
+          "id": 1002,
+          "name": "奈薩肯"
+        },
+        {
+          "id": 1003,
+          "name": "白傑爾"
+        },
+        {
+          "id": 1004,
+          "name": "凱西內爾"
+        },
+        {
+          "id": 1005,
+          "name": "尤斯迪埃"
+        },
+        {
+          "id": 1006,
+          "name": "艾瑞爾"
+        },
+        {
+          "id": 1007,
+          "name": "普雷奇翁"
+        },
+        {
+          "id": 1008,
+          "name": "梅斯蘭泰達"
+        },
+        {
+          "id": 1009,
+          "name": "希塔尼耶"
+        },
+        {
+          "id": 1010,
+          "name": "納尼亞"
+        },
+        {
+          "id": 1011,
+          "name": "塔哈巴達"
+        },
+        {
+          "id": 1012,
+          "name": "路特斯"
+        },
+        {
+          "id": 1013,
+          "name": "菲爾諾斯"
+        },
+        {
+          "id": 1014,
+          "name": "達彌努"
+        },
+        {
+          "id": 1015,
+          "name": "卡薩卡"
+        },
+        {
+          "id": 1016,
+          "name": "巴卡爾摩"
+        },
+        {
+          "id": 1017,
+          "name": "天加隆"
+        },
+        {
+          "id": 1018,
+          "name": "科奇隆"
+        },
+        {
+          "id": 2001,
+          "name": "伊斯拉佩爾"
+        },
+        {
+          "id": 2002,
+          "name": "吉凱爾"
+        },
+        {
+          "id": 2003,
+          "name": "崔妮爾"
+        },
+        {
+          "id": 2004,
+          "name": "露梅爾"
+        },
+        {
+          "id": 2005,
+          "name": "瑪爾庫坦"
+        },
+        {
+          "id": 2006,
+          "name": "阿斯佩爾"
+        },
+        {
+          "id": 2007,
+          "name": "艾萊修奇卡"
+        },
+        {
+          "id": 2008,
+          "name": "布里特拉"
+        },
+        {
+          "id": 2009,
+          "name": "奈蒙"
+        },
+        {
+          "id": 2010,
+          "name": "哈達爾"
+        },
+        {
+          "id": 2011,
+          "name": "盧德萊"
+        },
+        {
+          "id": 2012,
+          "name": "鄔爾古倫"
+        },
+        {
+          "id": 2013,
+          "name": "默尼"
+        },
+        {
+          "id": 2014,
+          "name": "奧達爾"
+        },
+        {
+          "id": 2015,
+          "name": "簡卡卡"
+        },
+        {
+          "id": 2016,
+          "name": "克羅梅德"
+        },
+        {
+          "id": 2017,
+          "name": "奎靈"
+        },
+        {
+          "id": 2018,
+          "name": "巴巴隆"
+        }
+      ]
+    }
+  }
+}

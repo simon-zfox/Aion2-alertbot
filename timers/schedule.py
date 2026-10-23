@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from copy import copy
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -7,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 import aiohttp
 
+from timers.config import REGIONS
 from timers.json_file import DATA_DIRECTORY, read_json, write_json
 
 
@@ -114,16 +116,22 @@ class Schedule:
         except (OSError, ValueError, KeyError, TypeError) as error:
             logger.warning("Keine gültige Shugo-Kopie vorhanden: %s", error)
 
-    def _prepare(self, payload: dict) -> tuple[ZoneInfo, tuple[Event, ...]]:
+    def _prepare(self, payload: dict) -> dict[str, tuple[ZoneInfo, tuple[Event, ...]]]:
         date.fromisoformat(payload["updatedAt"])
-        region_id = self.region_id
         regions = {region["id"]: region for region in payload["regions"]}
-        zone = ZoneInfo(regions[region_id]["timeZone"])
-        remote = payload["events"]
-        ids = [event["id"] for event in remote]
+        required = {self.region_id, *(region_id for _, region_id in REGIONS.values())}
+        if not required.issubset(regions):
+            raise ValueError("Eine unterstützte Zeitplanregion fehlt.")
+        ids = [event["id"] for event in payload["events"]]
         if len(set(ids)) != len(ids):
             raise ValueError("Doppelte Shugo-Event-IDs.")
-        selected = [event for event in remote if region_id in event["schedules"]]
+        return {region_id: self._prepare_region(payload, region_id, ZoneInfo(region["timeZone"]))
+                for region_id, region in regions.items()}
+
+    def _prepare_region(
+        self, payload: dict, region_id: str, zone: ZoneInfo,
+    ) -> tuple[ZoneInfo, tuple[Event, ...]]:
+        selected = [event for event in payload["events"] if region_id in event["schedules"]]
         if not selected:
             raise ValueError("Shugo liefert keine Events für die konfigurierte Region.")
         events = tuple(Event.parse(event, region_id, zone) for event in selected)
@@ -133,11 +141,24 @@ class Schedule:
             raise ValueError("Zeitplandaten überschreiten die Discord-Board-Limits.")
         return zone, events
 
-    def _apply(self, payload: dict, prepared: tuple[ZoneInfo, tuple[Event, ...]]) -> None:
-        self.zone, self.events = prepared
+    def _apply(self, payload: dict, prepared: dict[str, tuple[ZoneInfo, tuple[Event, ...]]]) -> None:
+        self._regions = prepared
+        self.zone, self.events = prepared[self.region_id]
         self.verified_at = payload["updatedAt"]
         self._payload = payload
         self.available = True
+
+    def for_region(self, region_id: str) -> "Schedule":
+        if not self.available:
+            raise RuntimeError("Keine gültigen Shugo-Daten verfügbar.")
+        if region_id not in self._regions:
+            raise ValueError("Für diese Region sind keine Shugo-Zeitpläne verfügbar.")
+        if region_id == self.region_id:
+            return self
+        selected = copy(self)
+        selected.region_id = region_id
+        selected.zone, selected.events = self._regions[region_id]
+        return selected
 
     async def refresh(self, session: aiohttp.ClientSession) -> None:
         try:

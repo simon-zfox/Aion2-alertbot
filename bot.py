@@ -37,6 +37,14 @@ class Bot(discord.Client):
         await self.timer_service.close()
         await super().close()
 
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
+        if payload.guild_id is not None:
+            await self.timer_service.forget_deleted({payload.message_id})
+
+    async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent) -> None:
+        if payload.guild_id is not None:
+            await self.timer_service.forget_deleted(payload.message_ids)
+
     async def on_ready(self) -> None:
         logging.getLogger(__name__).info("Angemeldet als %s", self.user)
 

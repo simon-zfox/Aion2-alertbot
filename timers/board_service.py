@@ -10,6 +10,7 @@ import aiohttp
 import discord
 from discord.ext import tasks
 
+from timers.config import DEFAULT_REGION, DEFAULT_SERVER, REGIONS, resolve_config
 from timers.schedule import Schedule
 from timers.board_store import Board, BoardStore
 from timers.view import build_board
@@ -56,46 +57,70 @@ class BoardService:
                 await self._http.close()
                 self._http = None
 
-    async def publish(self, channel: discord.TextChannel) -> discord.Message:
+    async def publish(
+        self, channel: discord.TextChannel, region: str = DEFAULT_REGION, server: str = DEFAULT_SERVER,
+    ) -> discord.Message:
+        region, server = resolve_config(region, server)
         async with self._lock:
-            view = build_board(self.schedule, self.clock())
-            board = await asyncio.to_thread(self.store.get, channel.id)
-            if board is not None:
-                try:
-                    message = await channel.fetch_message(board.message_id)
-                    await message.edit(
-                        content=None, embeds=[], attachments=[], view=view,
-                        allowed_mentions=discord.AllowedMentions.none(),
-                    )
-                except discord.NotFound as error:
-                    if error.code != 10008:
-                        raise
-                else:
-                    self._rendered[channel.id] = view.to_components()
-                    logger.info("Timer-Board aktualisiert (/timers): Kanal %s, Nachricht %s", channel.id, message.id)
-                    return message
+            schedule = self.schedule.for_region(REGIONS[region][1])
+            view = build_board(schedule, self.clock(), server)
             message = await channel.send(view=view, allowed_mentions=discord.AllowedMentions.none())
             try:
-                await asyncio.to_thread(self.store.save, Board(channel.guild.id, channel.id, message.id))
+                await asyncio.to_thread(
+                    self.store.save, Board(channel.guild.id, channel.id, message.id, region, server),
+                )
             except Exception:
-                # Ohne gespeicherte ID könnte der nächste Aufruf ein zweites Board anlegen.
+                # Ohne gespeicherte ID würde die neue Nachricht nicht weiter aktualisiert.
                 try:
                     await message.delete()
                 except discord.HTTPException:
                     logger.exception("Nicht gespeichertes Timer-Board konnte nicht entfernt werden")
                 raise
-            self._rendered[channel.id] = view.to_components()
+            self._rendered[message.id] = view.to_components()
+            logger.info("Timer-Board erstellt (/timers): Kanal %s, Nachricht %s", channel.id, message.id)
             return message
+
+    async def remove(self, guild_id: int, message_id: int) -> bool:
+        async with self._lock:
+            board = await asyncio.to_thread(self.store.get, message_id)
+            if board is None or board.guild_id != guild_id:
+                return False
+            try:
+                channel = self.client.get_channel(board.channel_id)
+                if channel is None:
+                    channel = await self.client.fetch_channel(board.channel_id)
+                message = await channel.fetch_message(board.message_id)
+                await message.delete()
+            except discord.NotFound as error:
+                if error.code not in {10003, 10008}:
+                    raise
+            await asyncio.to_thread(self.store.remove, message_id)
+            self._rendered.pop(message_id, None)
+            return True
+
+    async def forget_deleted(self, message_ids: set[int]) -> None:
+        async with self._lock:
+            boards = await asyncio.to_thread(self.store.list_all)
+            for board in boards:
+                if board.message_id in message_ids:
+                    await asyncio.to_thread(self.store.remove, board.message_id)
+                    self._rendered.pop(board.message_id, None)
 
     async def refresh(self) -> None:
         async with self._lock:
             boards = await asyncio.to_thread(self.store.list_all)
             if not boards:
                 return
-            view = build_board(self.schedule, self.clock())
-            payload = view.to_components()
+            now = self.clock()
+            views = {}
             for board in boards:
                 try:
+                    key = (board.region, board.server)
+                    if key not in views:
+                        schedule = self.schedule.for_region(REGIONS[board.region][1])
+                        view = build_board(schedule, now, board.server)
+                        views[key] = (view, view.to_components())
+                    view, payload = views[key]
                     channel = self.client.get_channel(board.channel_id)
                     if channel is None:
                         channel = await self.client.fetch_channel(board.channel_id)
@@ -103,20 +128,20 @@ class BoardService:
                         logger.warning("Timer-Kanal %s ist kein Textkanal", board.channel_id)
                         continue
                     message = await channel.fetch_message(board.message_id)
-                    if self._rendered.get(board.channel_id) != payload:
+                    if self._rendered.get(board.message_id) != payload:
                         await message.edit(
                             content=None, embeds=[], attachments=[], view=view,
                             allowed_mentions=discord.AllowedMentions.none(),
                         )
-                        self._rendered[board.channel_id] = payload
+                        self._rendered[board.message_id] = payload
                         logger.info(
                             "Timer-Board aktualisiert (automatisch): Kanal %s, Nachricht %s",
                             board.channel_id, board.message_id,
                         )
                 except discord.NotFound as error:
                     if error.code in {10003, 10008}:
-                        await asyncio.to_thread(self.store.remove, board.channel_id)
-                        self._rendered.pop(board.channel_id, None)
+                        await asyncio.to_thread(self.store.remove, board.message_id)
+                        self._rendered.pop(board.message_id, None)
                         logger.info("Gelöschtes Timer-Board in Kanal %s entfernt", board.channel_id)
                     else:
                         logger.warning("Timer-Board %s nicht erreichbar: %s", board.channel_id, error)
