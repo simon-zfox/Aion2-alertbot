@@ -4,5 +4,12 @@ template-bot/
 .venv/
 __pycache__/
 *.py[cod]
+tests/
 
 .env
+
+# Lokale Konfiguration und Board-IDs (sowie alte, unbenutzte Datenbanken)
+data/local.json
+data/*.sqlite3
+data/*.sqlite3-*
+data/*.tmp

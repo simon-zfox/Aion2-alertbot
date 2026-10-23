@@ -6,6 +6,11 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
+from timers.command import create_timers_command
+from timers.schedule import Schedule
+from timers.service import BoardService
+from timers.store import BoardStore
+
 
 @app_commands.command(name="ping", description="Antwortet mit pong.")
 async def ping(interaction: discord.Interaction) -> None:
@@ -17,9 +22,20 @@ class Bot(discord.Client):
         super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
         self.tree.add_command(ping)
+        self.timer_service = BoardService(
+            self,
+            BoardStore(Path(__file__).resolve().parent / "data" / "local.json"),
+            Schedule(),
+        )
+        self.tree.add_command(create_timers_command(self.timer_service))
 
     async def setup_hook(self) -> None:
+        await self.timer_service.start()
         await self.tree.sync()
+
+    async def close(self) -> None:
+        await self.timer_service.close()
+        await super().close()
 
     async def on_ready(self) -> None:
         logging.getLogger(__name__).info("Angemeldet als %s", self.user)
