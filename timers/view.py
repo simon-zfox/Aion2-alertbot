@@ -13,41 +13,41 @@ def describe(occurrence: Occurrence, now: datetime) -> str:
     if occurrence.active:
         text = f"🟢 **Aktiv** · Ende {timestamp(occurrence.ends_at)}"
     else:
-        text = f"Start {timestamp(occurrence.starts_at)}\n{timestamp(occurrence.starts_at, 'f')}"
-    if occurrence.portal_ends_at is not None:
-        if occurrence.active:
-            if now < occurrence.portal_ends_at:
-                text += f"\n🌀 Portal offen bis {timestamp(occurrence.portal_ends_at)}"
-            else:
-                text += "\nPortal geschlossen · Event läuft weiter"
-        else:
-            duration = int((occurrence.portal_ends_at - occurrence.starts_at).total_seconds() // 60)
-            text += f"\nPortal: erste {duration} Minuten"
+        text = f"Start {timestamp(occurrence.starts_at)} · {timestamp(occurrence.starts_at, 'f')}"
+    if occurrence.portal_ends_at is None:
+        return text
+    if not occurrence.active:
+        duration = int((occurrence.portal_ends_at - occurrence.starts_at).total_seconds() // 60)
+        text += f" · Portal: erste {duration} Minuten"
+    elif now < occurrence.portal_ends_at:
+        text += f" · 🌀 Portal offen bis {timestamp(occurrence.portal_ends_at)}"
+    else:
+        text += " · Portal geschlossen"
     return text
 
 
-def build_board(schedule: Schedule, now: datetime) -> list[discord.Embed]:
+def build_board(schedule: Schedule, now: datetime) -> discord.ui.LayoutView:
     occurrences = schedule.occurrences(now)
     groups = (
         ("🎪 Events", [o for o in occurrences if o.kind not in {"boss", "reset"}]),
         ("🌍 Weltbosse", [o for o in occurrences if o.kind == "boss"]),
         ("🔄 Resets", [o for o in occurrences if o.kind == "reset"]),
     )
-    embeds = []
-    for title, items in groups:
-        embed = discord.Embed(title=title, colour=0x2B6CB0)
-        for item in items:
-            embed.add_field(name=f"{item.emoji} {item.name}", value=describe(item, now), inline=False)
-        embeds.append(embed)
-    embeds[0].title = "🕒 AION 2 – Timer-Board · Events"
-    embeds[0].description = (
-        f"**{schedule.local['regionId']} · {schedule.zone.key} · UTC{now.astimezone(schedule.zone):%z}**\n"
-        "Je Event der laufende oder nächste Termin. Uhrzeiten in deiner Discord-Zeitzone.\n"
-        "Community-Zeitpläne, keine offiziellen Garantien; nach Patches im Spiel prüfen."
+    container = discord.ui.Container(
+        discord.ui.TextDisplay(
+            "**🕒 AION 2 – Timer-Board**\n"
+            f"-# {schedule.region_id} · {schedule.zone.key} · UTC{now.astimezone(schedule.zone):%z}"
+            " · Zeiten in deiner Discord-Zeitzone"
+        ),
+        accent_colour=0x2B6CB0,
     )
-    embeds[1].description = "Bossgruppen laut Zeitplandaten; keine individuellen Respawn-Prognosen."
-    embeds[2].set_footer(text=(
-        f"Shugo-Datenstand: {schedule.verified_at} · Lokale Ergänzungen: {schedule.local['updatedAt']}\n"
-        "Statusprüfung alle 60 Sekunden · Countdown durch Discord"
+    for title, items in groups:
+        rows = [f"{item.emoji} **{item.name}** · {describe(item, now)}" for item in items]
+        container.add_item(discord.ui.TextDisplay("\n".join([f"### {title}", *rows])))
+    container.add_item(discord.ui.TextDisplay(
+        f"-# Shugo: {schedule.verified_at} · Statusprüfung alle 60 Sekunden · Countdown durch Discord\n"
+        "-# Community-Zeitpläne; nach Patches im Spiel prüfen. Bossgruppen, keine Respawn-Prognosen."
     ))
-    return embeds
+    view = discord.ui.LayoutView(timeout=None)
+    view.add_item(container)
+    return view

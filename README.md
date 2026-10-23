@@ -24,7 +24,7 @@ diese hat Vorrang vor `.env`.
 Unter **Installation** einen Server-Installationslink mit den Scopes `bot` und
 `applications.commands` erstellen und den Bot auf einen Testserver einladen.
 Für Timer-Boards benötigt der Bot im Zielkanal **Kanal ansehen**, **Nachrichten
-senden**, **Links einbetten** und **Nachrichtenverlauf anzeigen**. Weder
+senden** und **Nachrichtenverlauf anzeigen**. **Links einbetten** ist nicht nötig. Weder
 Administratorrechte noch privilegierte Gateway-Intents sind erforderlich.
 
 ## Starten
@@ -47,9 +47,14 @@ erforderlich (Command-Default und Laufzeitprüfung). Threads und DMs werden nich
 unterstützt. Das Board ist öffentlich; die Bestätigung des Befehls ist nur für
 den Aufrufenden sichtbar. Ein erneuter Aufruf aktualisiert dieselbe Nachricht,
 auch nach einem Bot-Neustart. Pro Kanal wird ein Board verwaltet.
+Vorhandene Embed-Boards werden beim nächsten Update oder mit `/timers` in
+derselben Nachricht auf Components v2 umgestellt; alte Embeds werden entfernt.
 
-Das Board zeigt jeden vorhandenen Event-Typ genau einmal, mit dem laufenden
-oder nächsten Termin, chronologisch innerhalb dieser Gruppen:
+Das Board verwendet **Discord Components v2** statt Embeds: eine Überschrift
+pro Kategorie und eine Textzeile pro Event, einschließlich Status, Termin und
+gegebenenfalls Portalphase. Auf schmalen Displays kann Discord Zeilen umbrechen.
+Jeder vorhandene Event-Typ erscheint genau einmal mit dem laufenden oder
+nächsten Termin, chronologisch innerhalb dieser Gruppen:
 
 | Gruppe | Inhalt |
 | --- | --- |
@@ -79,17 +84,15 @@ Respawns. Die Daten enthalten nicht automatisch alle Bosse des Spiels.
   Schemafehlern bleiben die letzte gültige Kopie und die laufenden Boards aktiv.
   Eine fehlerhafte Antwort überschreibt niemals den Cache. Ohne gültige Daten
   sowohl online als auch lokal bricht der Start verständlich ab.
-- **Alle übrigen Daten** stehen in einer einzigen lokalen Datei
-  `data/local.json`: Regionseinstellung, zusätzliche Events und Board-IDs.
-  Sie wird beim ersten Start aus [data/local.example.json](data/local.example.json)
-  angelegt und ist von Git ausgeschlossen. Die Vorlage enthält nur die bei
-  Shugo fehlende **Arena of Tactics** (Datenstand 2026-10-05), keine redundanten
-  Shugo-Zeitpläne. Die alten getrennten Zeitplan-/Metadatendateien entfallen.
-- Lokale Events verwenden das Shugo-Schema (`id`, `name`, `icon`, `kind`,
-  `schedules`), zusätzlich ist `type: "windows"` mit `start`/`end` in `HH:MM`
-  für tägliche Zeitfenster möglich. Neue Shugo-Events werden automatisch
-  übernommen. Bei gleicher Event-ID hat Shugo vollständig Vorrang. Änderungen
-  an lokalen Ergänzungen nur bei gestopptem Bot vornehmen, dann neu starten.
+- [data/local.json](data/local.json) enthält ausschließlich die Guild-, Kanal-
+  und Nachrichten-IDs aktiver Boards (`boards`). Die Datei wird bei Bedarf mit
+  einer leeren Board-Liste angelegt und ist von Git ausgeschlossen. Beim Start
+  werden alte Regionseinstellungen und lokale Event-Ergänzungen entfernt;
+  vorhandene Board-IDs bleiben erhalten.
+- Es gibt keine lokalen Event-Ergänzungen. Events stammen ausschließlich aus
+  Shugo beziehungsweise dessen letzter gültiger Kopie. Neue Shugo-Events werden
+  automatisch übernommen; die **Arena of Tactics** erscheint nur, wenn Shugo
+  sie liefert.
 - Community-Daten sind keine offizielle NC-API und keine Aktualitätsgarantie.
   Nach Patches mit dem Spiel abgleichen. Lokale Referenzdaten unterliegen dem
   MIT-Hinweis in [data/LICENSE](data/LICENSE); die Referenz bleibt unverändert
@@ -105,9 +108,9 @@ Jede erfolgreiche Board-Aktualisierung wird auf INFO-Level in der Konsole
 protokolliert, mit Kanal- und Nachrichten-ID sowie dem Auslöser (`/timers` oder
 automatisch). Prüfläufe ohne Änderungen erzeugen keine Aktualisierungsmeldung.
 
-Es wird **keine Datenbank** verwendet. Board-IDs liegen zusammen mit den lokalen
-Ergänzungen in `data/local.json`. Schreibvorgänge ersetzen die Datei atomar;
-Board-Änderungen erhalten alle übrigen Einstellungen. Das Datenverzeichnis muss
+Es wird **keine Datenbank** verwendet. Ausschließlich Board-IDs liegen in
+[data/local.json](data/local.json). Schreibvorgänge ersetzen die Datei atomar.
+Das Datenverzeichnis muss
 beschreibbar und bei Deployments persistent sein. Nur **eine Bot-Instanz pro
 Datenverzeichnis** betreiben. Nach Neustarts werden vorhandene Boards fortgesetzt.
 
@@ -129,9 +132,9 @@ nächste Termine werden erst nach dem Wiederanlauf erneuert.
 - [bot.py](bot.py): Client, Command-Registrierung und Lebenszyklus.
 - [timers/command.py](timers/command.py): `/timers`, Rechte und Rückmeldungen.
 - [timers/schedule.py](timers/schedule.py): Shugo-Laden, Validierung und netzwerkfreie Terminberechnung.
-- [timers/view.py](timers/view.py): datengetriebene Gruppierung in drei Embeds.
-- [timers/service.py](timers/service.py): ein gemeinsamer HTTP-Client, stündlicher Datenabruf und Board-Aktualisierung.
-- [timers/store.py](timers/store.py): Board-IDs in der lokalen JSON-Datei.
+- [timers/view.py](timers/view.py): kompakte Components-v2-Darstellung mit drei Kategorien.
+- [timers/board_service.py](timers/board_service.py): ein gemeinsamer HTTP-Client, stündlicher Datenabruf und Board-Aktualisierung.
+- [timers/board_store.py](timers/board_store.py): Board-IDs in der lokalen JSON-Datei.
 - [timers/json_file.py](timers/json_file.py): gemeinsames Lesen und atomisches Schreiben von JSON.
 - [tests/](tests/): `unittest`-Tests mit kontrollierter Zeit, temporären JSON-Dateien
   und gemocktem HTTP/Discord; kein Token und keine Netzwerkverbindung nötig.
@@ -144,9 +147,11 @@ nächste Termine werden erst nach dem Wiederanlauf erneuert.
 Die Tests decken Tages-/Wochenwechsel, Sommerzeit des Betrachters, aktive
 Zeitfenster, Portalgrenzen, UTC-Resets, vollständige Gruppierung, Discord-Limits,
 Neustarts, parallele Aufrufe, Duplikatvermeidung und API-/Persistenzfehler ab.
-Zusätzlich werden Quellenpriorität, lokale Ergänzungen, neue Shugo-Events,
+Zusätzlich werden ausschließlich aus Shugo übernommene Events, neue Shugo-Events,
 stündliche Downloads, Online-Ausfälle, ungültige Antworten, Offline-Neustarts,
-Cache-Schreibfehler und atomare JSON-Persistenz geprüft.
+Cache-Schreibfehler und atomare JSON-Persistenz geprüft. Unveränderte Antworten
+werden nicht erneut geparst; die Terminsuche endet beim ersten passenden Tag.
+Board-IDs werden beim Start validiert, nicht bei jedem internen Zugriff erneut.
 Referenzfälle: `schedule-engine.test.ts`, `panel-render.test.ts` und
 `scheduler.test.ts`; die Python-Tests validieren die eigenständige Implementierung.
 Live-Tests und Command-Synchronisierung erfolgen nur beim ausdrücklich gestarteten Bot.

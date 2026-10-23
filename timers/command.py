@@ -3,7 +3,7 @@ import logging
 import discord
 from discord import app_commands
 
-from timers.service import BoardService
+from timers.board_service import BoardService
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def create_timers_command(service: BoardService) -> app_commands.Command:
     @app_commands.checks.has_permissions(manage_guild=True)
     async def timers(interaction: discord.Interaction) -> None:
         channel = interaction.channel
-        if interaction.guild_id is None or not isinstance(channel, discord.TextChannel):
+        if not isinstance(channel, discord.TextChannel):
             await interaction.response.send_message(
                 "Bitte /timers in einem Server-Textkanal verwenden (nicht in Threads oder DMs).",
                 ephemeral=True,
@@ -26,7 +26,6 @@ def create_timers_command(service: BoardService) -> app_commands.Command:
         required_permissions = {
             "view_channel": "Kanal ansehen",
             "send_messages": "Nachrichten senden",
-            "embed_links": "Links einbetten",
             "read_message_history": "Nachrichtenverlauf anzeigen",
         }
         missing_permissions = [
@@ -45,6 +44,7 @@ def create_timers_command(service: BoardService) -> app_commands.Command:
         try:
             message = await service.publish(channel)
         except discord.Forbidden:
+            logger.exception("Kein Zugriff auf das Timer-Board")
             text = "Kein Zugriff auf das Timer-Board. Bitte die Kanalberechtigungen des Bots prüfen."
         except discord.HTTPException:
             logger.exception("Discord-Fehler beim Veröffentlichen des Timer-Boards")

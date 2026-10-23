@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 
 from timers.command import create_timers_command
 from timers.schedule import Schedule
-from timers.service import BoardService
-from timers.store import BoardStore
+from timers.board_service import BoardService
+from timers.board_store import BoardStore
 
 
 @app_commands.command(name="ping", description="Antwortet mit pong.")

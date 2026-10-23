@@ -104,9 +104,7 @@ class Occurrence:
 class Schedule:
     def __init__(self, data_directory: Path = DATA_DIRECTORY) -> None:
         self.cache_path = data_directory / "shugo-timers.json"
-        local_path = data_directory / "local.json"
-        self.local = read_json(local_path)
-        date.fromisoformat(self.local["updatedAt"])
+        self.region_id = "global-as"
         self.events: tuple[Event, ...] = ()
         self.available = False
         self._payload = None
@@ -118,24 +116,17 @@ class Schedule:
 
     def _prepare(self, payload: dict) -> tuple[ZoneInfo, tuple[Event, ...]]:
         date.fromisoformat(payload["updatedAt"])
-        region_id = self.local["regionId"]
+        region_id = self.region_id
         regions = {region["id"]: region for region in payload["regions"]}
         zone = ZoneInfo(regions[region_id]["timeZone"])
         remote = payload["events"]
-        if not remote:
-            raise ValueError("Shugo liefert keine Events.")
         ids = [event["id"] for event in remote]
         if len(set(ids)) != len(ids):
             raise ValueError("Doppelte Shugo-Event-IDs.")
         selected = [event for event in remote if region_id in event["schedules"]]
         if not selected:
             raise ValueError("Shugo liefert keine Events für die konfigurierte Region.")
-        # Ein Shugo-Event verdrängt die lokale Ergänzung mit derselben ID vollständig.
-        selected += [event for event in self.local["events"]
-                     if event["id"] not in ids and region_id in event["schedules"]]
         events = tuple(Event.parse(event, region_id, zone) for event in selected)
-        if len({event.event_id for event in events}) != len(events):
-            raise ValueError("Doppelte lokale Event-IDs.")
         counts = [sum(event.kind == kind for event in events) for kind in ("boss", "reset")]
         counts.append(len(events) - sum(counts))
         if max(counts) > 25 or sum(len(e.name) + len(e.emoji) + 180 for e in events) > 5400:
@@ -153,11 +144,12 @@ class Schedule:
             async with session.get(SOURCE_URL, timeout=aiohttp.ClientTimeout(total=15)) as response:
                 response.raise_for_status()
                 payload = await response.json()
+            if self.available and payload == self._payload and self.cache_path.exists():
+                return
             prepared = self._prepare(payload)
-            if payload != self._payload or not self.cache_path.exists():
-                await asyncio.to_thread(write_json, self.cache_path, payload)
-                self._apply(payload, prepared)
-                logger.info("Shugo-Zeitplandaten aktualisiert: %s", self.verified_at)
+            await asyncio.to_thread(write_json, self.cache_path, payload)
+            self._apply(payload, prepared)
+            logger.info("Shugo-Zeitplandaten aktualisiert: %s", self.verified_at)
         except (aiohttp.ClientError, TimeoutError, OSError, ValueError, KeyError, TypeError) as error:
             logger.warning("Shugo-Aktualisierung fehlgeschlagen; letzte gültige Kopie bleibt aktiv: %s", error)
             if not self.available:
@@ -172,12 +164,15 @@ class Schedule:
         result = []
         for event in self.events:
             today = now.astimezone(event.zone).date()
-            candidates = []
-            for offset in range(-1, 8):
-                for start, end in event.slots(today + timedelta(days=offset)):
-                    if start >= now or end > now:
-                        candidates.append((start, end))
-            start, end = min(candidates)
+            candidates = (
+                min(
+                    ((start, end) for start, end in event.slots(today + timedelta(days=offset))
+                     if start >= now or end > now),
+                    default=None,
+                )
+                for offset in range(-1, 8)
+            )
+            start, end = next(candidate for candidate in candidates if candidate is not None)
             result.append(Occurrence(
                 event_id=event.event_id, name=event.name, emoji=event.emoji, kind=event.kind,
                 starts_at=start, ends_at=end, active=start <= now < end,

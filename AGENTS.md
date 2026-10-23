@@ -4,7 +4,7 @@
 
 - Dieses Repository entwickelt einen Discord-Bot für AION 2 in Python 3.11+ mit `discord.py`.
 - Einstiegspunkt ist [bot.py](bot.py), Abhängigkeiten stehen in [requirements.txt](requirements.txt), Einrichtung und Betrieb in [README.md](README.md).
-- Aktuell existiert nur `/ping` → `pong` mit globaler Command-Synchronisierung beim Start. Weitere Funktionen sind nicht automatisch Teil eines Auftrags.
+- Aktuell existieren `/ping` → `pong` und `/timers` mit globaler Command-Synchronisierung beim Start. Weitere Funktionen sind nicht automatisch Teil eines Auftrags.
 - Kommunikation und Projektdokumentation auf Deutsch; Code-Bezeichner auf Englisch.
 
 ## Rolle von template-bot
@@ -36,6 +36,15 @@ Zuerst die betroffenen Abschnitte der [Referenz-README](template-bot/README.md),
 4. Passende Referenz-Testfälle als eigenständige Python-Tests nachbilden, einschließlich relevanter Randfälle und Regressionen. Referenztests allein validieren die Python-Implementierung nicht.
 5. Betroffene Prüfungen ausführen, direkt zugehörige Dokumentation aktualisieren und knapp berichten: Änderungen, geprüfte Fälle, bewusste Abweichungen und verbleibende Einschränkungen. Nicht ausgeführte Prüfungen ausdrücklich nennen.
 
+## Coding-Stil
+
+- Schlanken, direkten Python-Code schreiben: kein unnötiger Boilerplate, keine spekulativen Abstraktionen oder ungenutzten Funktionen. Discord-Callbacks und dekorierte Tasks gelten als verwendet.
+- Keine redundanten Checks oder unerreichbaren Zweige. Prüfungen nur behalten, wenn sie einen konkreten Fehler verhindern oder gewünschtes Verhalten sichern; Berechtigungen, externe Daten und atomare Persistenz nicht blind vereinfachen.
+- Externe Daten beim Einlesen validieren, nicht dieselben unveränderten Daten bei jedem Zugriff erneut prüfen. Unnötige Datei-/API-Zugriffe und Berechnungen vermeiden.
+- Bei fehleranfälligen I/O-Operationen im Zweifel `try`/`except` statt vorgeschalteter Existenzprüfungen verwenden. Fehler an der zuständigen Grenze abfangen und mit Kontext in der Konsole protokollieren; bei unerwarteten Fehlern `logger.exception` verwenden. Fehler nicht still verschlucken oder Erfolg vortäuschen.
+- Nur tatsächlich benötigte Hilfsfunktionen behalten; abstrahieren, wenn es reale Wiederholung oder Komplexität reduziert. Lesbarkeit hat Vorrang vor möglichst wenigen Zeilen.
+- Optimierungen müssen bestehendes Verhalten erhalten und durch passende Regressionstests belegt sein.
+
 ## Technische Leitplanken
 
 - Discord-I/O asynchron halten; den Event-Loop nicht mit synchronen Netzwerkaufrufen, langen Berechnungen oder `sleep` blockieren. Fachlogik möglichst unabhängig von Discord und Netzwerk testbar halten.
@@ -49,7 +58,7 @@ Zuerst die betroffenen Abschnitte der [Referenz-README](template-bot/README.md),
 ## Validierung und Seiteneffekte
 
 - Die Python-Umgebung `.venv` verwenden. Abhängigkeiten nur bei einer Manifeständerung oder nachgewiesen fehlenden Paketen installieren: `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`.
-- Aktuell gibt es im Python-Projekt keinen konfigurierten Test-Runner, Linter oder Build. Keine erfolgreichen Prüfungen behaupten, die nicht eingerichtet oder ausgeführt wurden.
+- Vorhandene Tests unter [tests](tests/) verwenden `unittest`; Linter und Build sind nicht konfiguriert. Keine erfolgreichen Prüfungen behaupten, die nicht eingerichtet oder ausgeführt wurden.
 - Bei neuen Python-Tests ohne zusätzlichen Framework-Bedarf `unittest` mit einem `tests`-Verzeichnis nutzen. Vorhandenes Testwerkzeug hat Vorrang; zunächst nur betroffene Tests ausführen, z. B. `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_<feature>.py"`. Ein Lauf ohne gefundene Tests ist kein Funktionsnachweis.
 - Discord und externe APIs in automatisierten Tests mocken; Zeit für Scheduler-Tests kontrollierbar machen. Tests dürfen ohne Token und ohne Zugriff auf einen echten Discord-Server laufen.
 - Den Bot nicht als beiläufigen Test starten: `bot.py` verbindet sich mit Discord und synchronisiert globale Commands. Live-Tests, Command-Deployments und externe Schreibaktionen nur nach ausdrücklicher Freigabe auf einem Testserver.

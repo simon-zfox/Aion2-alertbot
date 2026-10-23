@@ -4,17 +4,14 @@ from collections.abc import Callable
 from contextlib import suppress
 from datetime import UTC, datetime
 from time import monotonic
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from discord.types.embed import Embed as EmbedPayload
+from typing import Any
 
 import aiohttp
 import discord
 from discord.ext import tasks
 
 from timers.schedule import Schedule
-from timers.store import Board, BoardStore
+from timers.board_store import Board, BoardStore
 from timers.view import build_board
 
 
@@ -31,7 +28,7 @@ class BoardService:
         self.schedule = schedule
         self.clock = clock
         self._lock = asyncio.Lock()
-        self._rendered: dict[int, list["EmbedPayload"]] = {}
+        self._rendered: dict[int, list[dict[str, Any]]] = {}
         self._http: aiohttp.ClientSession | None = None
         self._next_download = 0.0
 
@@ -61,20 +58,23 @@ class BoardService:
 
     async def publish(self, channel: discord.TextChannel) -> discord.Message:
         async with self._lock:
-            embeds = build_board(self.schedule, self.clock())
+            view = build_board(self.schedule, self.clock())
             board = await asyncio.to_thread(self.store.get, channel.id)
             if board is not None:
                 try:
                     message = await channel.fetch_message(board.message_id)
-                    await message.edit(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+                    await message.edit(
+                        content=None, embeds=[], attachments=[], view=view,
+                        allowed_mentions=discord.AllowedMentions.none(),
+                    )
                 except discord.NotFound as error:
                     if error.code != 10008:
                         raise
                 else:
-                    self._rendered[channel.id] = [embed.to_dict() for embed in embeds]
+                    self._rendered[channel.id] = view.to_components()
                     logger.info("Timer-Board aktualisiert (/timers): Kanal %s, Nachricht %s", channel.id, message.id)
                     return message
-            message = await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+            message = await channel.send(view=view, allowed_mentions=discord.AllowedMentions.none())
             try:
                 await asyncio.to_thread(self.store.save, Board(channel.guild.id, channel.id, message.id))
             except Exception:
@@ -84,18 +84,16 @@ class BoardService:
                 except discord.HTTPException:
                     logger.exception("Nicht gespeichertes Timer-Board konnte nicht entfernt werden")
                 raise
-            self._rendered[channel.id] = [embed.to_dict() for embed in embeds]
+            self._rendered[channel.id] = view.to_components()
             return message
 
     async def refresh(self) -> None:
         async with self._lock:
             boards = await asyncio.to_thread(self.store.list_all)
-            live_channels = {board.channel_id for board in boards}
-            self._rendered = {key: value for key, value in self._rendered.items() if key in live_channels}
             if not boards:
                 return
-            embeds = build_board(self.schedule, self.clock())
-            payload = [embed.to_dict() for embed in embeds]
+            view = build_board(self.schedule, self.clock())
+            payload = view.to_components()
             for board in boards:
                 try:
                     channel = self.client.get_channel(board.channel_id)
@@ -106,7 +104,10 @@ class BoardService:
                         continue
                     message = await channel.fetch_message(board.message_id)
                     if self._rendered.get(board.channel_id) != payload:
-                        await message.edit(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+                        await message.edit(
+                            content=None, embeds=[], attachments=[], view=view,
+                            allowed_mentions=discord.AllowedMentions.none(),
+                        )
                         self._rendered[board.channel_id] = payload
                         logger.info(
                             "Timer-Board aktualisiert (automatisch): Kanal %s, Nachricht %s",
